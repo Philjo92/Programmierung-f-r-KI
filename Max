@@ -1,4 +1,4 @@
-
+!pip install pandas
 # Read the Excel file into a pandas DataFrame
 file_path = 'Datenbank.xlsx'  # Replace 'your_excel_file.xlsx' with your file path
 data = pd.read_excel(file_path)

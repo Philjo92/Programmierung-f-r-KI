@@ -1,0 +1,45 @@
+pip install reportlab
+
+import sqlite3
+from reportlab.pdfgen import canvas
+
+def create_pdf(data, output_file):
+    pdf = canvas.Canvas(output_file)
+
+    # Setze den Schriftstil
+    pdf.setFont("Helvetica", 12)
+
+    # Schreibe Daten in das PDF
+    y_position = 750
+    for row in data:
+        for col_index, value in enumerate(row):
+            pdf.drawString(50 + col_index * 100, y_position, str(value))
+        y_position -= 20
+
+    # Speichere das PDF
+    pdf.save()
+
+def retrieve_data_from_database(database_file):
+    connection = sqlite3.connect(database_file)
+    cursor = connection.cursor()
+
+    # Beispielabfrage: Hier musst du deine eigene Abfrage anpassen
+    query = "SELECT * FROM deine_tabelle"
+    cursor.execute(query)
+    data = cursor.fetchall()
+
+    connection.close()
+
+    return data
+
+if __name__ == "__main__":
+    database_file = "deine_datenbank.db"
+    output_file = "output.pdf"
+
+    # Daten aus der Datenbank abrufen
+    data = retrieve_data_from_database(database_file)
+
+    # PDF erstellen
+    create_pdf(data, output_file)
+
+    print(f"PDF wurde erfolgreich erstellt: {output_file}")

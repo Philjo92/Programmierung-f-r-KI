@@ -1,1 +1,55 @@
+!pip install folium
+import random
+import folium
 
+def generate_random_coordinates(num_points, center_latitude, center_longitude, radius):
+    coordinates = []
+    for _ in range(num_points):
+        # Generate random offsets within the specified radius
+        lat_offset = random.uniform(-radius, radius)
+        lon_offset = random.uniform(-radius, radius)
+
+        # Calculate new coordinates based on offsets
+        new_latitude = center_latitude + lat_offset
+        new_longitude = center_longitude + lon_offset
+
+        coordinates.append((new_latitude, new_longitude))
+
+    return coordinates
+
+def display_bike_shops_on_map(bike_shop_coordinates, map_file_path, center_latitude, center_longitude):
+    
+    # Karte initialisieren
+    my_map = folium.Map(location=[center_latitude, center_longitude], zoom_start=10)
+
+    # Marker für die Fahrradhändler hinzufügen
+    for i, coordinates in enumerate(bike_shop_coordinates, 1):
+        folium.Marker(
+            location=coordinates,
+            popup=f"Fahrradhändler {i}",
+            icon=folium.Icon(color="blue")
+        ).add_to(my_map)
+
+    # Karte anzeigen (als HTML-Datei speichern oder in einem Jupyter Notebook anzeigen)
+    my_map.save(map_file_path)
+
+def main():
+    # Koordinaten von Dortmund
+    dortmund_latitude = 51.5136
+    dortmund_longitude = 7.4653
+
+    # Radius für die zufälligen Koordinaten
+    radius = 0.2
+
+    # Anzahl der Fahrradhändler
+    anz_shops = 30
+
+    # Liste mit zufälligen Koordinaten generieren
+    bike_shop_coordinates = generate_random_coordinates(anz_shops, dortmund_latitude, dortmund_longitude, radius)
+
+    # Anzeige der generierten Koordinaten auf der Karte
+    map_file_path = "bike_shops_in_dortmund_map.html"
+    display_bike_shops_on_map(bike_shop_coordinates, map_file_path, dortmund_latitude, dortmund_longitude)
+
+if __name__ == "__main__":
+    main()

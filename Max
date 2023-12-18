@@ -8,23 +8,33 @@
 ##print(data.head())  # This will display the first few rows of your data
 
 ###New###
+##Notes:##
+##Haversine Formel Quelle https://www.kompf.de/gps/distcalc.html zur Berechnung der Entfernung zwischen zwei Geodaten
 
+#dLat = lat2-lat1
+#dLon = lon2-lon1;
+#a = pow(sin(dLat/2.0), 2) + pow(sin(dLon/2.0), 2) * cos(lat1) * cos(lat2)
+#dist = 6378.388 * 2.0 * atan2(sqrt(a), sqrt(1.0-a))
+
+#mit dist: Entfernung in km
+
+##Prrogramm
 !pip install pandas #python and data science
 !pip install geopy
 import pandas as pd
 from geopy.geocoders import Nominatim
 
-# Beispiel DataFrame mit Straße und PLZ
-
+## 1 Excel einlesen und Datenbank erstellen
 file_path = 'Datenbank.xlsx'  # Replace 'your_excel_file.xlsx' with your file path
 data = pd.read_excel(file_path)
-
 df = data
+##End 1
+
 
 # Geopy Geocoder initialisieren
 geolocator = Nominatim(user_agent="Exercises")
 
-# Funktion, um Geodaten (Längen- und Breitengrade) zu erhalten
+# Funktion definieren, um Geodaten (Längen- und Breitengrade) zu erhalten
 def get_geolocation(row):
     try:
         address = f"{row['Straße']}, {row['PLZ']}"
@@ -35,7 +45,9 @@ def get_geolocation(row):
             return None, None
     except:
         return None,None
-# Geodaten berechnen und in neue Spalten einfügen
+
+
+# Geodaten berechnen und in neue Spalten der Datenbank einfügen
 df[['Latitude', 'Longitude']] = df.apply(get_geolocation, axis=1, result_type='expand')
 
 print(df)

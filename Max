@@ -1,7 +1,41 @@
-!pip install pandas
-# Read the Excel file into a pandas DataFrame
+##old
+##!pip install pandas
+## Read the Excel file into a pandas DataFrame
+##file_path = 'Datenbank.xlsx'  # Replace 'your_excel_file.xlsx' with your file path
+##data = pd.read_excel(file_path)
+
+# Display the contents of the DataFrame
+##print(data.head())  # This will display the first few rows of your data
+
+###New###
+
+!pip install pandas #python and data science
+!pip install geopy
+import pandas as pd
+from geopy.geocoders import Nominatim
+
+# Beispiel DataFrame mit Straße und PLZ
+
 file_path = 'Datenbank.xlsx'  # Replace 'your_excel_file.xlsx' with your file path
 data = pd.read_excel(file_path)
 
-# Display the contents of the DataFrame
-print(data.head())  # This will display the first few rows of your data
+df = data
+
+# Geopy Geocoder initialisieren
+geolocator = Nominatim(user_agent="Exercises")
+
+# Funktion, um Geodaten (Längen- und Breitengrade) zu erhalten
+def get_geolocation(row):
+    try:
+        address = f"{row['Straße']}, {row['PLZ']}"
+        location = geolocator.geocode(address)
+        if location:
+            return location.latitude, location.longitude
+        else:
+            return None, None
+    except:
+        return None,None
+# Geodaten berechnen und in neue Spalten einfügen
+df[['Latitude', 'Longitude']] = df.apply(get_geolocation, axis=1, result_type='expand')
+
+print(df)

@@ -1,55 +1,78 @@
+!pip install pandas
+!pip install geopy
 !pip install folium
-import random
+
+import pandas as pd
+from geopy.geocoders import Nominatim
 import folium
+from geopy.distance import geodesic
 
-def generate_random_coordinates(num_points, center_latitude, center_longitude, radius):
-    coordinates = []
-    for _ in range(num_points):
-        # Generate random offsets within the specified radius
-        lat_offset = random.uniform(-radius, radius)
-        lon_offset = random.uniform(-radius, radius)
+def get_user_input():
+    city = input("Gib die Stadt ein: ")
+    radius = float(input("Gib den Umkreisradius in Kilometern ein: "))
+    return city, radius
 
-        # Calculate new coordinates based on offsets
-        new_latitude = center_latitude + lat_offset
-        new_longitude = center_longitude + lon_offset
+def filter_addresses_by_radius(df, center_coords, radius):
+    filtered_addresses = []
+    for index, row in df.iterrows():
+        coords = (row['Latitude'], row['Longitude'])
+        if not any(pd.isna(coord) for coord in coords):
+            distance = geodesic(center_coords, coords).kilometers
+            if distance <= radius:
+                filtered_addresses.append(row['Address'])
+    return filtered_addresses
 
-        coordinates.append((new_latitude, new_longitude))
+file_path = 'Datenbank.xlsx'
+data = pd.read_excel(file_path)
+df = data.iloc[:80].copy()
 
-    return coordinates
+geolocator = Nominatim(user_agent="Exercises")
 
-def display_bike_shops_on_map(bike_shop_coordinates, map_file_path, center_latitude, center_longitude):
-    
-    # Karte initialisieren
-    my_map = folium.Map(location=[center_latitude, center_longitude], zoom_start=10)
+def get_geolocation(row):
+    try:
+        address = f"{row['Straße']}, {row['PLZ']}"
+        location = geolocator.geocode(address)
+        if location:
+            return location.latitude, location.longitude, location.address
+        else:
+            return None, None, None
+    except:
+        return None, None, None
 
-    # Marker für die Fahrradhändler hinzufügen
-    for i, coordinates in enumerate(bike_shop_coordinates, 1):
-        folium.Marker(
-            location=coordinates,
-            popup=f"Fahrradhändler {i}",
-            icon=folium.Icon(color="blue")
-        ).add_to(my_map)
+df[['Latitude', 'Longitude', 'Address']] = df.apply(get_geolocation, axis=1, result_type='expand')
 
-    # Karte anzeigen (als HTML-Datei speichern oder in einem Jupyter Notebook anzeigen)
+# Get user input for city and radius
+city, radius = get_user_input()
+
+# Get coordinates of the specified city
+city_location = geolocator.geocode(city)
+if city_location:
+    center_coords = (city_location.latitude, city_location.longitude)
+
+    # Filter addresses within the specified radius
+    filtered_addresses = filter_addresses_by_radius(df, center_coords, radius)
+
+    # Display addresses in OpenStreetMap using folium
+    my_map = folium.Map(location=center_coords, zoom_start=12)
+
+    for index, row in df.iterrows():
+        coords = (row['Latitude'], row['Longitude'])
+        if not any(pd.isna(coord) for coord in coords):
+            distance = geodesic(center_coords, coords).kilometers
+            if distance <= radius:
+                folium.Marker(
+                    location=[row['Latitude'], row['Longitude']],
+                    popup=row['Address'],
+                    icon=folium.Icon(color="blue")
+                ).add_to(my_map)
+
+    # Save the map to an HTML file or display it in a Jupyter Notebook
+    map_file_path = "addresses_map.html"
     my_map.save(map_file_path)
+    print(f"Map saved to {map_file_path}")
 
-def main():
-    # Koordinaten von Dortmund
-    dortmund_latitude = 51.5136
-    dortmund_longitude = 7.4653
-
-    # Radius für die zufälligen Koordinaten
-    radius = 0.2
-
-    # Anzahl der Fahrradhändler
-    anz_shops = 30
-
-    # Liste mit zufälligen Koordinaten generieren
-    bike_shop_coordinates = generate_random_coordinates(anz_shops, dortmund_latitude, dortmund_longitude, radius)
-
-    # Anzeige der generierten Koordinaten auf der Karte
-    map_file_path = "bike_shops_in_dortmund_map.html"
-    display_bike_shops_on_map(bike_shop_coordinates, map_file_path, dortmund_latitude, dortmund_longitude)
-
-if __name__ == "__main__":
-    main()
+    # Print the DataFrame with Geolocation information
+    print("Filtered Addresses:")
+    print(filtered_addresses)
+else:
+    print(f"Die Stadt {city} konnte nicht gefunden werden.")

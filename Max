@@ -1,40 +1,22 @@
-##old
-##!pip install pandas
-## Read the Excel file into a pandas DataFrame
-##file_path = 'Datenbank.xlsx'  # Replace 'your_excel_file.xlsx' with your file path
-##data = pd.read_excel(file_path)
-
-# Display the contents of the DataFrame
-##print(data.head())  # This will display the first few rows of your data
-
-###New###
-##Notes:##
-##Haversine Formel Quelle https://www.kompf.de/gps/distcalc.html zur Berechnung der Entfernung zwischen zwei Geodaten
-
-#dLat = lat2-lat1
-#dLon = lon2-lon1;
-#a = pow(sin(dLat/2.0), 2) + pow(sin(dLon/2.0), 2) * cos(lat1) * cos(lat2)
-#dist = 6378.388 * 2.0 * atan2(sqrt(a), sqrt(1.0-a))
-
-#mit dist: Entfernung in km
-
-##Prrogramm
 !pip install pandas #python and data science
 !pip install geopy
+
 import pandas as pd
 from geopy.geocoders import Nominatim
+print ("1")
+# Beispiel DataFrame mit Straße und PLZ
 
-## 1 Excel einlesen und Datenbank erstellen
 file_path = 'Datenbank.xlsx'  # Replace 'your_excel_file.xlsx' with your file path
+print("2")
 data = pd.read_excel(file_path)
-df = data
-##End 1
+print("3")
+df = data.iloc[:10].copy() ## ersten 10 einträge der data
 
-
+print("4")
 # Geopy Geocoder initialisieren
 geolocator = Nominatim(user_agent="Exercises")
-
-# Funktion definieren, um Geodaten (Längen- und Breitengrade) zu erhalten
+print("5")
+# Funktion, um Geodaten (Längen- und Breitengrade) zu erhalten
 def get_geolocation(row):
     try:
         address = f"{row['Straße']}, {row['PLZ']}"
@@ -43,11 +25,12 @@ def get_geolocation(row):
             return location.latitude, location.longitude
         else:
             return None, None
+        print ("ping")
     except:
         return None,None
-
-
-# Geodaten berechnen und in neue Spalten der Datenbank einfügen
+# Geodaten berechnen und in neue Spalten einfügen
 df[['Latitude', 'Longitude']] = df.apply(get_geolocation, axis=1, result_type='expand')
-
+print("6")
 print(df)
+
+

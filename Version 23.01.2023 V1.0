@@ -1,0 +1,218 @@
+#!pip install pandas
+#!pip install geopy
+#!pip install folium
+import pandas as pd
+import tkinter as tk
+import matplotlib.pyplot as plt ## Vorraussetzung für PDF Ausgabe
+import folium
+from geopy.distance import geodesic #Iport für Entfernungsberechnung
+from tkinter import filedialog
+from geopy.geocoders import Nominatim
+
+#GUI zum hochladen einer Datei
+global file_path
+global data
+
+def upload_file():
+    global file_path
+    file_path = filedialog.askopenfilename(filetypes=[("Excel Files", "*.xlsx;*.xls")])
+    if file_path:
+        print(f"Die ausgewählte Datei ist: {file_path}")
+        labelAusgewählteDatei.config(text=f"Die ausgewählte Datei ist {file_path}")
+
+def bestätigen():
+    global data
+    data = pd.read_excel(file_path)
+    root.destroy()
+    # Hier könnte der Code für die Funktion Fenster2(data) stehen, falls dies notwendig ist
+
+root = tk.Tk()
+root.title("Datei hochladen")
+
+labelAusgewählteDatei = tk.Label(root, text="keine Datei ausgewählt")
+labelAusgewählteDatei.pack()
+
+upload_button = tk.Button(root, text="Datei hochladen", command=upload_file)
+upload_button.pack()
+
+Bestätigungsbutton = tk.Button(root, text="Bestätigen", command=bestätigen)
+Bestätigungsbutton.pack()
+
+root.mainloop()
+
+if file_path is not None:
+    root.destroy
+
+def get_user_input():
+    city = PLZ #input("Gib die Stadt ein: ")
+    radius = Umkreis #float(input("Gib den Umkreisradius in Kilometern ein: "))
+    return city, radius
+
+def filter_addresses_by_radius(df, center_coords, radius):
+    
+    # Neue Liste für gefilterte Adressen
+    filtered_addresses = [] 
+    
+    for index, row in df.iterrows():
+        coords = (row['Latitude'], row['Longitude'])
+        if not any(pd.isna(coord) for coord in coords):## isna fragt nach keinen oder NaN Werten
+            distance = geodesic(center_coords, coords).kilometers
+            if distance <= radius:
+                filtered_addresses.append(row['Address'])
+    return filtered_addresses
+
+
+
+#Dataframe aus Exceladatei
+data = pd.read_excel(file_path)
+df = data.iloc[:30].copy() ##Die ersten 50 Elemente in df schreiben
+geolocator = Nominatim(user_agent="Exercises")
+
+def get_geolocation(row):
+    try:
+        address = f"{row['Straße']}, {row['PLZ']}"
+        location = geolocator.geocode(address)
+        if location:
+            return location.latitude, location.longitude, location.address
+        else:
+            return None, None, None
+    except:
+        return None, None, None
+
+df[['Latitude', 'Longitude', 'Address']] = df.apply(get_geolocation, axis=1, result_type='expand')
+print("beendet")
+
+# GUI für Eingabe der Adresse und des Umkreises
+Str ="test"
+PLZ ="test"
+Umkreis="Test"
+global framedistance
+Initdf = {'A': [1, 2, 3], 'B': [4, 5, 6]}
+framedistance=pd.DataFrame(Initdf)
+
+def Test123(Str, PLZ, Umkreis):
+    print(Str, PLZ, Umkreis)
+    # Get user input for city and radius
+    city, radius = get_user_input()
+    global filtered_addresses
+    # Get coordinates of the specified city
+    city_location = geolocator.geocode(city)
+    if city_location:
+        center_coords = (city_location.latitude, city_location.longitude)
+
+        # Filter addresses within the specified radius
+        filtered_addresses = filter_addresses_by_radius(df, center_coords, radius)
+
+        # Display addresses in OpenStreetMap using folium
+        my_map = folium.Map(location=center_coords, zoom_start=6)
+
+        for index, row in df.iterrows():
+            coords = (row['Latitude'], row['Longitude'])
+            if not any(pd.isna(coord) for coord in coords):
+                distance = geodesic(center_coords, coords).kilometers
+                if distance <= radius:
+                    folium.Marker(
+                        location=[row['Latitude'], row['Longitude']],
+                        popup=row['Address'],
+                        icon=folium.Icon(color="blue")
+                    ).add_to(my_map)
+                   
+        # Save the map to an HTML file or display it in a Jupyter Notebook
+        map_file_path = "addresses_map.html"
+        my_map.save(map_file_path)
+        print(f"Map saved to {map_file_path}")
+
+        # Print the DataFrame with Geolocation information
+        print("Filtered Addresses:")
+        print(filtered_addresses)
+    else:
+        print(f"Die Stadt {city} konnte nicht gefunden werden.")
+
+def on_button_click():
+    global Str
+    Str = entry.get()
+    global PLZ 
+    PLZ = entry1.get()
+    global Umkreis
+    Umkreis = float(entryUmkreis.get())
+    
+    label.config(text=f"Eingegebene Straße: {Str}")
+    label1.config(text=f"Eingegebene PLZ: {PLZ}")
+    labelUmkreis.config(text=f"Eingegebener Umkreis: {Umkreis}")
+    
+    Test123(PLZ, Str, Umkreis)
+# Erstelle das Hauptfenster
+root = tk.Tk()
+root.title("Eingabefeld Beispiel")
+
+# Erstelle ein Label
+label = tk.Label(root, text="Gib eine Straße ein:")
+label.pack()
+# Erstelle ein Eingabefeld
+entry = tk.Entry(root)
+entry.pack()
+label1 =tk.Label(root, text="Gib eine PLZ ein:")
+label1.pack()
+entry1 = tk.Entry(root)
+entry1.pack()
+
+labelUmkreis =tk.Label(root, text="Umkreis der angezeigt werden soll in km")
+labelUmkreis.pack()
+entryUmkreis = tk.Entry(root)
+entryUmkreis.pack()
+
+# Erstelle einen Button, der den eingegebenen Text ausgibt
+button = tk.Button(root, text="Bestätigen", command=on_button_click)
+button.pack(side ="left", padx=100, pady=100)
+
+# PDF Erstellung (ChatGPT)
+# PDF Generierung Philipp
+def pdfDrucken():
+    global filtered_addresses
+
+    # Erstelle ein DataFrame aus den gefilterten Adressen
+    SplitList = [item.split(',') for item in filtered_addresses]
+    df_distance = pd.DataFrame(SplitList)
+
+    # Definiere die Größe der Gesamtabbildung (A4)
+    plt.figure(figsize=(11.69, 8.27))
+
+    # Füge eine Tabelle mit den gefilterten Adressen und den Spaltenüberschriften hinzu
+    ax = plt.subplot(111)  # Erstelle eine Achse
+    table = plt.table(cellText=df_distance.values,
+                      colLabels=df_distance.columns,
+                      loc='center',
+                      cellLoc='center',
+                      colColours=['#f0f0f0'] * len(df_distance.columns),  # Hintergrundfarbe der Spaltenüberschriften
+                      cellColours=[['#f0f0f0']*len(df_distance.columns) for _ in range(len(df_distance))])  # Hintergrundfarbe der Zellen
+
+    # Setze die Schriftart und Schriftgröße für die Tabelle
+    table.auto_set_font_size(False)
+    table.set_fontsize(12)
+
+    # Setze die Zeilenhöhe explizit auf 1.5
+    table.scale(1, 1.5)
+    
+    # Deaktiviere die Achsen
+    ax.axis('off')
+
+    # Passe die Spaltenbreite nachträglich an
+    colWidth = [plt.rcParams['font.size']*len(max(df_distance[col], key=lambda x: len(str(x))))/80
+                if max(df_distance[col], key=lambda x: len(str(x))) is not None
+                else 1
+                for col in df_distance.columns]
+
+    for i, width in enumerate(colWidth):
+        table.auto_set_column_width(i)
+
+    # Speichere die Abbildung als PDF
+    plt.savefig('pandas_dataframe.pdf')
+    plt.show()
+    
+    # Schließe das Hauptfenster
+    root.destroy()
+
+button = tk.Button(root, text="PDF Drucken", command=pdfDrucken)
+button.pack(side="left", padx=100, pady=100)
+
+root.mainloop()

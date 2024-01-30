@@ -75,9 +75,7 @@ def filter_addresses_by_radius(df, center_coords, radius):
 Str ="test"
 PLZ ="test"
 Umkreis="Test"
-global framedistance
-Initdf = {'A': [1, 2, 3], 'B': [4, 5, 6]}
-framedistance=pd.DataFrame(Initdf)
+
 
 # Amal | Dataframe aus Exceladatei
 data = pd.read_excel(file_path)
